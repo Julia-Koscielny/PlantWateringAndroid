@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -56,90 +58,115 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun PlantScreen(viewModel: PlantViewModel = viewModel()){
+
+fun PlantScreen(viewModel: PlantViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
     var inputName by remember { mutableStateOf("") }
     var inputDate by remember { mutableStateOf("") }
-    var addStep by remember { mutableStateOf(0) }
+    var addStep by remember { mutableStateOf(0) } // 0 = name, 1 = date
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .systemBarsPadding()
+    ) {
         Column {
 
-            Row {
-                Text(
-                    text = "My Plants",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp)
+            Text(
+                text = "My Plants",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(16.dp)
+            )
 
-                )
-            }
-
-            LazyRow {
-                items(uiState.plants){ plant ->
-                    PlantItem(plant=plant)
+            LazyColumn() {
+                items(uiState.plants) { plant ->
+                    PlantItem(plant = plant)
                 }
-
             }
         }
 
+
         Column(
             modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = 25.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 25.dp)
         ) {
             if (addStep == 0) {
+
                 TextField(
                     value = inputName,
-                    onValueChange = {inputName = it},
-                    label = {Text("Enter plant name")},
+                    onValueChange = { inputName = it },
+                    label = { Text("Enter plant name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions (
+                    keyboardActions = KeyboardActions(
                         onDone = {
-                            if (inputName.isNotBlank()){
+                            if (inputName.isNotBlank()) {
                                 addStep = 1
                             }
                         }
                     )
+                )
+            } else {
 
+                TextField(
+                    value = inputDate,
+                    onValueChange = { inputDate = it },
+                    label = { Text("Enter last watering date") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (inputDate.isNotBlank()) {
+
+                                val newPlant = PlantUi(
+                                    plantName = inputName,
+                                    plantImage = R.drawable.image1,
+                                    waterDate = inputDate
+                                )
+
+                                viewModel.addPlant(newPlant)
+
+                                // Reset
+                                inputName = ""
+                                inputDate = ""
+                                addStep = 0
+                            }
+                        }
+                    )
                 )
             }
         }
-
-        TextField(
-            value = inputName,
-            onValueChange = {newText -> inputName = newText },
-            label = { Text("Enter plant's name") },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 25.dp)
-        )
     }
 }
+
 
 @Composable
 fun PlantItem(plant: PlantUi){
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ){
         Image(
             painter = painterResource(id=plant.plantImage),
             contentDescription = plant.plantName,
             modifier = Modifier
-                .size(64.dp)
+                .size(90.dp)
                 .padding(end=8.dp)
         )
         Column {
-            Text(text = plant.plantName, style = MaterialTheme.typography.bodyLarge)
-            Text(text = "Last watered: ${plant.waterDate}",style = MaterialTheme.typography.bodySmall)
+            Text(text = plant.plantName, style = MaterialTheme.typography.titleLarge)
+            Text(text = "Last watered: ${plant.waterDate}",style = MaterialTheme.typography.bodyMedium)
         }
 
     }
